@@ -1,10 +1,10 @@
 import { Settlement } from "../../interface/interface"
 import { write, read } from "../../utils/dbConnection";
 
-const SQL_INSERT_QUERY = 'INSERT INTO settlement (user_id, round_id, operator_id, bet_amount, winning_amount, multiplier, status, result) VALUES (?,?,?,?,?,?,?,?)'
+const SQL_INSERT_QUERY = 'INSERT INTO settlement (user_id, round_id, operator_id, bet_amount, winning_amount, multiplier, status, hand_type, result) VALUES (?,?,?,?,?,?,?,?,?)'
 export const insertData = async(data:Settlement) =>{
     try {
-        const {user_id, round_id, operator_id,bet_amount, winning_amount, multiplier, status, result} = data;
+        const {user_id, round_id, operator_id,bet_amount, winning_amount, multiplier, status, hand_type, result} = data;
     await write(SQL_INSERT_QUERY,[
         user_id,
         round_id,
@@ -13,6 +13,7 @@ export const insertData = async(data:Settlement) =>{
         Number(winning_amount).toFixed(2),
         Number(multiplier).toFixed(2), 
         status,
+        hand_type,
         result
     ]);
     console.log('Inserted settlement values successfully');

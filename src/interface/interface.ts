@@ -106,5 +106,6 @@ export interface Settlement {
     winning_amount?: number;
     multiplier: number;
     status: "win" | "loss";
+    hand_type: string,
     result?: string;
 }

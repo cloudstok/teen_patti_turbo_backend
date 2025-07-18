@@ -90,6 +90,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
             winning_amount: Number(winAmt),
             multiplier: Number(mult),
             status,
+            hand_type:handType,
             result: JSON.stringify(result)
         };
 

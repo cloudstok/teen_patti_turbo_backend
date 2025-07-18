@@ -7,6 +7,7 @@ export const settlement = `CREATE TABLE IF NOT EXISTS settlement (
     winning_amount DECIMAL(10, 2) DEFAULT 0.00,
     multiplier DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     status enum('win','loss') Default 'loss',
+    hand_type VARCHAR(255),
     result varchar(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
