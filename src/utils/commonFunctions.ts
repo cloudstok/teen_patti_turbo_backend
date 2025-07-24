@@ -34,14 +34,14 @@ export const prepareDataForWebhook = async (data: BetData, key: WebhookKey): Pro
         switch (key) {
             case "DEBIT":
                 baseData.amount = amountFormatted;
-                baseData.description = `${amountFormatted} has been debited for Teen Patti Turbo game for round_id ${id}`;
+                baseData.description = `${amountFormatted} debited for Teen Patti Turbo game for Round ${id}`;
                 baseData.game_id = game_id;
                 baseData.user_id = user_id;
                 baseData.txn_type = 0;
                 break;
             case "CREDIT":
                 baseData.amount = winning_amount;
-                baseData.description = `${winning_amount} has been credited for Teen Patti Turbo game for round_id ${id}`;
+                baseData.description = `${(winning_amount)?.toFixed(2)} credited for Teen Patti Turbo game for Round ${id}`;
                 baseData.txn_ref_id = txn_id
                 baseData.game_id = game_id;
                 baseData.user_id = user_id;
