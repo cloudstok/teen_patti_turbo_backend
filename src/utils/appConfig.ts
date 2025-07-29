@@ -22,6 +22,7 @@ function requireNumberEnv(name: string): number {
 export const appConfig: AppConfig = {
     minBetAmount: requireNumberEnv("MIN_BET_AMOUNT"),
     maxBetAmount: requireNumberEnv("MAX_BET_AMOUNT"),
+    maxCashoutAmount: requireNumberEnv('MAX_CASHOUT'),
     dbConfig: {
         host: requireEnv("DB_HOST"),
         user: requireEnv("DB_USER"),

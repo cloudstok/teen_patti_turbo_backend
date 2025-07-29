@@ -1,7 +1,7 @@
 import { reqData, Settlement } from "../../interface/interface";
 import { getCache, setCache } from "../../utils/redisConnection";
 import { Socket } from "socket.io";
-import { generateUUIDv7, updateBalanceFromAccount} from "../../utils/commonFunctions";
+import { generateUUIDv7, updateBalanceFromAccount } from "../../utils/commonFunctions";
 import { calculateWinnings, getUserIP } from "../../utils/helperFunctions";
 import { appConfig } from "../../utils/appConfig";
 import { insertData } from "./betDb";
@@ -57,21 +57,23 @@ export const placeBet = async (socket: Socket, data: reqData) => {
                 winning_amount: winAmt,
                 game_id: game_id,
                 user_id: user_id
-            }, "CREDIT", ({game_id,operatorId,token}))
-            logger.info(`Player ${socket.id} won the bet: Status:${status}, Win amount:${winAmt}, multiplier: ${mult}, handType: ${handType}, result: ${result}`)
-        }else {
-            logger.info(`Player ${socket.id} lost the bet: Status:${status}, lost bet amount:${betAmt}`)
-        }
+            }, "CREDIT", ({ game_id, operatorId, token }))
 
-        parsedPlayerDetails.balance += winAmt;
-        await setCache(`PL: ${socket.id}`, JSON.stringify(parsedPlayerDetails));
-        setTimeout(() => {
-            socket.emit('info', {
-                user_id,
-                operator_id: operatorId,
-                balance: parsedPlayerDetails.balance
-            });
-        }, 2000);
+            logger.info(`Winning Credited | User: ${user_id} | Amount: ${winAmt}`);
+
+            parsedPlayerDetails.balance += winAmt;
+            await setCache(`PL: ${socket.id}`, JSON.stringify(parsedPlayerDetails));
+            setTimeout(() => {
+                socket.emit('info', {
+                    user_id,
+                    operator_id: operatorId,
+                    balance: parsedPlayerDetails.balance
+                });
+            }, 5000);
+
+        } else {
+            logger.info(`Bet Lost | User: ${user_id} | Amount: ${betAmt}`);
+        }
 
         socket.emit("result", {
             status,
@@ -90,13 +92,13 @@ export const placeBet = async (socket: Socket, data: reqData) => {
             winning_amount: Number(winAmt),
             multiplier: Number(mult),
             status,
-            hand_type:handType,
+            hand_type: handType,
             result: JSON.stringify(result)
         };
 
         await insertData(dbObj);
-
+        return
     } catch (err: any) {
-        console.log('Error in place bets', err.message)
+        logger.error(`Error occured in pb: ${err.message}`);
     }
-}; 
+};

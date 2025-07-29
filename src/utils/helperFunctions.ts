@@ -1,4 +1,5 @@
 import { Card, HandType, reqData } from "../interface/interface";
+import { appConfig } from "./appConfig";
 
 const suits = ['H', 'S', 'C', 'D'];
 
@@ -35,7 +36,18 @@ function evaluateHands(): {
     hand: Card[]
 } {
     const deck = shuffleDeck(createDeck());
-    const hand = deck.slice(0, 3);
+
+    const hand = [];
+    const randomCards: string[] = [];
+    
+    while (hand.length < 3) {
+        const card = deck[Math.floor(Math.random() * 52)]
+        const concat = `${card.num}+${card.suit}`;
+        if (!randomCards.includes(concat)) {
+            randomCards.push(concat);
+            hand.push(card);
+        }
+    }
 
     const nums = hand.map(card => card.num).sort((a, b) => a - b);
     const suitsDrawn = hand.map(card => card.suit);
@@ -49,10 +61,10 @@ function evaluateHands(): {
 
     let handType: HandType = '';
     if (threeOfKind) handType = 'three_of_a_kind';
-    if (pair) handType = 'pair';
-    if (straightFlush) handType = 'straight_flush';
-    if (flush) handType = 'flush';
-    if (straight) handType = 'straight';
+    else if (straightFlush) handType = 'straight_flush';
+    else if (straight) handType = 'straight';
+    else if (flush) handType = 'flush';
+    else if (pair) handType = 'pair';
     return { handType, hand };
 };
 
@@ -69,13 +81,13 @@ export const calculateWinnings = (data: reqData) => {
     }
 
     const multiplier = handType ? payoutMap[handType] : 0;
-    const win = multiplier > 0;
-    const status: "win" | "loss" = win ? "win" : "loss";
+    const status: "win" | "loss" = multiplier ? "win" : "loss";
+    const maxCashout = Number(appConfig.maxCashoutAmount)
 
     return {
         betAmt: data.btAmt,
-        winAmt: win ? data.btAmt * multiplier : 0.00,
-        mult: multiplier ? multiplier : 0.00,
+        winAmt: multiplier ? Math.min(maxCashout, data.btAmt * multiplier) : 0,
+        mult: multiplier ? multiplier : 0,
         status,
         handType: handType,
         result: hand

@@ -2,6 +2,9 @@ import crypto from "crypto";
 import { BetData, WebhookKey, WebhookData, PlayerDetails, AccountResult } from "../interface/interface";
 import axios, { AxiosRequestConfig } from "axios";
 import { sendToQueue } from "./amqp";
+import { createLogger } from "./loggers";
+const thirdPartyLogger = createLogger('ThirdPartyRequest', 'jsonl');
+const failedThirdPartyLogger = createLogger('FailedThirdPartyRequest', 'jsonl');
 
 export const generateUUIDv7 = () => {
     const timeStamp = Date.now();
@@ -91,10 +94,12 @@ export const sendRequestToAccount = async (webhookData: WebhookData, token: stri
             timeout: 5000
         }
         const data = (await axios(clientServerOption)).data;
+        thirdPartyLogger.info(JSON.stringify({ logId: generateUUIDv7(), req: clientServerOption, res: data }));
         if (!data.status) return false
         return true;
     } catch (err: any) {
         console.error(`Err while sending request to accounts is:::`, err.message);
+        failedThirdPartyLogger.error(JSON.stringify({ logId: generateUUIDv7(), req: { webhookData, token }, res: err?.response?.status }));
         return false;
     }
 };
