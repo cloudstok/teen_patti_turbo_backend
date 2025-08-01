@@ -19,7 +19,7 @@ function createDeck(): Card[] {
             deck.push({ suit, num });
         }
     };
-    return deck
+    return deck;
 };
 
 function shuffleDeck(deck: Card[]): Card[] {
@@ -27,7 +27,7 @@ function shuffleDeck(deck: Card[]): Card[] {
         const k = Math.floor(Math.random() * (j + 1));
         [deck[j], deck[k]] = [deck[k], deck[j]];
     }
-    return deck
+    return deck;
 }
 
 
@@ -82,7 +82,7 @@ export const calculateWinnings = (data: reqData) => {
 
     const multiplier = handType ? payoutMap[handType] : 0;
     const status: "win" | "loss" = multiplier ? "win" : "loss";
-    const maxCashout = Number(appConfig.maxCashoutAmount)
+    const maxCashout = Number(appConfig.maxCashoutAmount);
 
     return {
         betAmt: data.btAmt,

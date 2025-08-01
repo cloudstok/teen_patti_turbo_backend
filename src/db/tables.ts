@@ -10,5 +10,7 @@ export const settlement = `CREATE TABLE IF NOT EXISTS settlement (
     hand_type VARCHAR(255),
     result varchar(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    index idx_user_operator_id (user_id, operator_id),
+    index idx_user_operator_round_id (user_id, operator_id, round_id)
 )`;

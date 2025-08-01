@@ -9,6 +9,22 @@ import { createLogger } from "../../utils/loggers";
 
 const logger = createLogger('Bets', 'jsonl');
 
+const validateBets = (btAmt: number, balance: number, socket: Socket): Boolean => {
+    if (isNaN(Number(btAmt))) {
+        socket.emit("bet_error", "message : Invalid Bet amount type");
+        return false;
+    };
+    if (btAmt > balance) {
+        socket.emit("bet_error", "message : Insufficient Balance");
+        return false;
+    };
+    if (btAmt < appConfig.minBetAmount || btAmt > appConfig.maxBetAmount) {
+        socket.emit("bet_error", "message : Invalid bet amount.");
+        return false;
+    };
+    return true;
+};
+
 export const placeBet = async (socket: Socket, data: reqData) => {
     try {
         const playerDetails = await getCache(`PL:${socket.id}`);
@@ -19,11 +35,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
         const parsedPlayerDetails = JSON.parse(playerDetails);
         const { user_id, operatorId, token, game_id, balance } = parsedPlayerDetails;
 
-        if (isNaN(Number(data.btAmt))) return socket.emit("bet_error", "message : Invalid Bet amount type");
-        if (data.btAmt > Number(balance)) return socket.emit("bet_error", "message : Insufficient Balance");
-        if (data.btAmt < appConfig.minBetAmount || data.btAmt > appConfig.maxBetAmount) {
-            return socket.emit("bet_error", "message : Invalid bet amount.")
-        }
+        if (!validateBets(data.btAmt, balance, socket)) return;
 
         const roundId = generateUUIDv7();
         const userIP = getUserIP(socket);
@@ -47,7 +59,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
         });
 
         //Bet Result
-        const txn_id = webhookData.txn_id
+        const txn_id = webhookData.txn_id;
         const { betAmt, winAmt, mult, status, handType, result } = calculateWinnings(data);
         if (status == "win") {
             await updateBalanceFromAccount({
@@ -95,9 +107,9 @@ export const placeBet = async (socket: Socket, data: reqData) => {
             hand_type: handType,
             result: JSON.stringify(result)
         };
-
+        logger.info(dbObj);
         await insertData(dbObj);
-        return
+        return;
     } catch (err: any) {
         logger.error(`Error occured in pb: ${err.message}`);
     }
