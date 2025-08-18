@@ -10,10 +10,15 @@ export const fetchUserDetails = async (token: string, game_id: string): Promise<
         });
 
         const userDetails: UserData | undefined = response.data.user;
+        const userId = userDetails?.user_id;
+        const operatorId = userDetails;
+        const id = `${operatorId}:${userId}`;
+ 
 
         if (userDetails) {
             const finalUserData: FinalUserData | undefined = {
                 ...userDetails,
+                id,
                 game_id,
                 token
             }

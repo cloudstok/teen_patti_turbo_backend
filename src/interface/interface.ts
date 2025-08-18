@@ -5,6 +5,7 @@ export interface UserData {
 }
 
 export interface FinalUserData extends UserData {
+    id:string
     game_id: string;
     token: string;
 }
