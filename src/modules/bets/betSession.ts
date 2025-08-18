@@ -6,6 +6,7 @@ import { calculateWinnings, getUserIP } from "../../utils/helperFunctions";
 import { appConfig } from "../../utils/appConfig";
 import { insertData } from "./betDb";
 import { createLogger } from "../../utils/loggers";
+import { inPlayUser } from '../../socket';
 
 const logger = createLogger('Bets', 'jsonl');
 
@@ -33,6 +34,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
         };
 
         const parsedPlayerDetails = JSON.parse(playerDetails);
+         inPlayUser.delete(parsedPlayerDetails.id);
         const { user_id, operatorId, token, game_id, balance } = parsedPlayerDetails;
 
         if (!validateBets(data.btAmt, balance, socket)) return;
