@@ -38,12 +38,18 @@ export function socket(io: Server) {
         });
 
         await setCache(`PL:${socket.id}`, JSON.stringify(userData));
-        inPlayUser.set(userData.id,token)
+        inPlayUser.set(userData.id, socket.id);
 
         messageRoute(socket);
 
         socket.on('disconnect', async () => {
             await deleteCache(`PL:${socket.id}`);
+               for (const [userId, sId] of inPlayUser.entries()) {
+                if (sId === socket.id) {
+                    inPlayUser.delete(userId);
+                    break;
+                }
+            }
         })
 
         socket.on('error', (err: Error) => {
