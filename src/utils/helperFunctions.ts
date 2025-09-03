@@ -38,6 +38,7 @@ function evaluateHands(): {
     const deck = shuffleDeck(createDeck());
 
     const hand = [];
+
     const randomCards: string[] = [];
     
     while (hand.length < 3) {

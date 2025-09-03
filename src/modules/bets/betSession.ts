@@ -1,12 +1,11 @@
 import { reqData, Settlement } from "../../interface/interface";
-import { getCache, setCache } from "../../utils/redisConnection";
+import { deleteCache, getCache, setCache } from "../../utils/redisConnection";
 import { Socket } from "socket.io";
 import { generateUUIDv7, updateBalanceFromAccount } from "../../utils/commonFunctions";
 import { calculateWinnings, getUserIP } from "../../utils/helperFunctions";
 import { appConfig } from "../../utils/appConfig";
 import { insertData } from "./betDb";
 import { createLogger } from "../../utils/loggers";
-import { inPlayUser } from '../../socket';
 
 const logger = createLogger('Bets', 'jsonl');
 
@@ -27,16 +26,29 @@ const validateBets = (btAmt: number, balance: number, socket: Socket): Boolean =
 };
 
 export const placeBet = async (socket: Socket, data: reqData) => {
+    const lockKey = `BET_LOCK:${socket.id}`;
     try {
+        const isLocked = await getCache(lockKey);
+        if (isLocked) {
+            return socket.emit('bet_error', 'Multiple bets not allowed at the same time');
+        }
+
+        await setCache(lockKey, '1');
+
         const playerDetails = await getCache(`PL:${socket.id}`);
         if (!playerDetails) {
+            await deleteCache(lockKey);
             return socket.emit('bet_error', 'Invalid User');
         };
 
         const parsedPlayerDetails = JSON.parse(playerDetails);
         const { user_id, operatorId, token, game_id, balance } = parsedPlayerDetails;
 
-        if (!validateBets(data.btAmt, balance, socket)) return;
+
+        if (!validateBets(data.btAmt, balance, socket)) {
+            await deleteCache(lockKey);
+            return;
+        }
 
         const roundId = generateUUIDv7();
         const userIP = getUserIP(socket);
@@ -62,27 +74,32 @@ export const placeBet = async (socket: Socket, data: reqData) => {
         //Bet Result
         const txn_id = webhookData.txn_id;
         const { betAmt, winAmt, mult, status, handType, result } = calculateWinnings(data);
+
         if (status == "win") {
-            await updateBalanceFromAccount({
-                id: roundId,
-                txn_id: txn_id,
-                bet_amount: betAmt,
-                winning_amount: winAmt,
-                game_id: game_id,
-                user_id: user_id
-            }, "CREDIT", ({ game_id, operatorId, token }))
+            setTimeout(async () => {
+                updateBalanceFromAccount({
+                    id: roundId,
+                    txn_id: txn_id,
+                    bet_amount: betAmt,
+                    winning_amount: winAmt,
+                    game_id: game_id,
+                    user_id: user_id
+                }, "CREDIT", ({ game_id, operatorId, token }))
 
-            logger.info(`Winning Credited | User: ${user_id} | Amount: ${winAmt}`);
+                logger.info(`Winning Credited | User: ${user_id} | Amount: ${winAmt}`);
 
-            parsedPlayerDetails.balance += winAmt;
-            await setCache(`PL: ${socket.id}`, JSON.stringify(parsedPlayerDetails));
+                parsedPlayerDetails.balance += winAmt
+
+                await setCache(`PL:${socket.id}`, JSON.stringify(parsedPlayerDetails));
+            }, 1000)
+
             setTimeout(() => {
                 socket.emit('info', {
                     user_id,
                     operator_id: operatorId,
                     balance: parsedPlayerDetails.balance
                 });
-            }, 5000);
+            }, 8000);
 
         } else {
             logger.info(`Bet Lost | User: ${user_id} | Amount: ${betAmt}`);
@@ -110,8 +127,10 @@ export const placeBet = async (socket: Socket, data: reqData) => {
         };
         logger.info(dbObj);
         await insertData(dbObj);
-        return;
     } catch (err: any) {
         logger.error(`Error occured in pb: ${err.message}`);
+    } finally {
+        await deleteCache(lockKey);
+        return;
     }
 };

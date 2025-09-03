@@ -43,6 +43,7 @@ export const prepareDataForWebhook = async (data: BetData, key: WebhookKey): Pro
                 baseData.txn_type = 0;
                 break;
             case "CREDIT":
+                
                 baseData.amount = winning_amount;
                 baseData.description = `${(winning_amount)?.toFixed(2)} credited for Teen Patti Turbo game for Round ${id}`;
                 baseData.txn_ref_id = txn_id
