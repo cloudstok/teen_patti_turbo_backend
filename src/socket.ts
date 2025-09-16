@@ -44,6 +44,7 @@ export function socket(io: Server) {
 
         socket.on('disconnect', async () => {
             await deleteCache(`PL:${socket.id}`);
+            await deleteCache(userData.id);
         })
 
         socket.on('error', (err: Error) => {
