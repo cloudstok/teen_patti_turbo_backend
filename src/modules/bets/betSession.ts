@@ -42,6 +42,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
         };
 
         const parsedPlayerDetails = JSON.parse(playerDetails);
+        await deleteCache(parsedPlayerDetails.id);
         const { user_id, operatorId, token, game_id, balance } = parsedPlayerDetails;
 
 

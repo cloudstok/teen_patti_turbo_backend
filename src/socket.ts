@@ -1,6 +1,6 @@
 import { Socket, Server } from "socket.io";
 import { fetchUserDetails } from "./utils/fetchUserDetails";
-import { deleteCache, setCache } from "./utils/redisConnection";    
+import { deleteCache, getCache, setCache } from "./utils/redisConnection";    
 import { messageRoute } from "./routes/messsageRouter";
 
 export function socket(io: Server) {
@@ -21,6 +21,15 @@ export function socket(io: Server) {
             console.log('Invalid User')
             return
         }
+        const isUserExist = await getCache(userData.id);
+        if (isUserExist) {
+            console.log("User already connected from a platform, disconnecting older resource....");
+            const socket = io.sockets.sockets.get(isUserExist);
+            if (socket) {
+                socket.emit('betError', 'User connected from another source');
+                socket.disconnect(true);
+            }
+        }
 
         socket.emit('info', {
             user_id: userData?.user_id,
@@ -29,6 +38,7 @@ export function socket(io: Server) {
         });
 
         await setCache(`PL:${socket.id}`, JSON.stringify(userData));
+        await setCache(userData.id,socket.id)
 
         messageRoute(socket);
 
