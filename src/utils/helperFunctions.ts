@@ -37,7 +37,7 @@ function evaluateHands(): {
 } {
     const deck = shuffleDeck(createDeck());
 
-    const hand = [];
+    const hand = []
 
     const randomCards: string[] = [];
     
@@ -55,7 +55,7 @@ function evaluateHands(): {
 
     const [num1, num2, num3] = nums;
     const flush = suitsDrawn[0] === suitsDrawn[1] && suitsDrawn[1] === suitsDrawn[2];
-    const straight = num2 === num1 + 1 && num3 === num2 + 1;
+    const straight = ( num2 === num1 + 1 && num3 === num2 + 1) || (num1 === 1 && num2 === 12 && num3 === 13);
     const threeOfKind = num1 === num2 && num2 === num3;
     const pair = num1 === num2 || num2 === num3 || num1 === num3;
     const straightFlush = flush && straight;
