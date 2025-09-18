@@ -84,6 +84,17 @@ interface DBConfig {
     interval: string;
 };
 
+export interface BetObject {
+    roundId: string;
+    token: string;
+    socket_id: string;
+    game_id: string;
+    bet_amount?: number;
+    debit_txn_id?: string;
+    credit_txn_id?:string;
+    ip?: string
+};
+
 interface RedisConfig {
     host: string;
     port: number;

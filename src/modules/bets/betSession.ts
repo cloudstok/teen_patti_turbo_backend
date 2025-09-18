@@ -1,4 +1,4 @@
-import { reqData, Settlement } from "../../interface/interface";
+import { BetObject, reqData, Settlement } from "../../interface/interface";
 import { deleteCache, getCache, setCache } from "../../utils/redisConnection";
 import { Socket } from "socket.io";
 import { generateUUIDv7, updateBalanceFromAccount } from "../../utils/commonFunctions";
@@ -52,6 +52,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
 
         const roundId = generateUUIDv7();
         const userIP = getUserIP(socket);
+        const betObj: BetObject = { roundId, token, socket_id: parsedPlayerDetails.socketId, game_id, ip: userIP };
         const webhookData = await updateBalanceFromAccount({
             id: roundId,
             bet_amount: data.btAmt,
@@ -62,6 +63,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
 
         if (!webhookData.status) return socket.emit("bet_error", "message : Bet Cancelled By Upstream Server ");
         parsedPlayerDetails.balance -= data.btAmt;
+        if (webhookData.txn_id) betObj.debit_txn_id = webhookData.txn_id
         logger.info(`Bets Placed Successfully for player : ${JSON.stringify(parsedPlayerDetails)} with bet amount : ${data.btAmt}`)
         await setCache(`PL:${socket.id}`, JSON.stringify(parsedPlayerDetails));
 
@@ -77,7 +79,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
 
         if (status == "win") {
             setTimeout(async () => {
-                updateBalanceFromAccount({
+                const creditRes =updateBalanceFromAccount({
                     id: roundId,
                     txn_id: txn_id,
                     bet_amount: betAmt,
@@ -89,7 +91,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
                 logger.info(`Winning Credited | User: ${user_id} | Amount: ${winAmt}`);
 
                 parsedPlayerDetails.balance += winAmt
-
+                betObj.credit_txn_id = (await creditRes).txn_id
                 await setCache(`PL:${socket.id}`, JSON.stringify(parsedPlayerDetails));
             }, 1000)
 
@@ -126,6 +128,7 @@ export const placeBet = async (socket: Socket, data: reqData) => {
             result: JSON.stringify(result)
         };
         logger.info(dbObj);
+        logger.info(JSON.stringify({ betObj }));
         await insertData(dbObj);
     } catch (err: any) {
         logger.error(`Error occured in pb: ${err.message}`);
